@@ -18,5 +18,17 @@ export default async function signIn(formData: FormData) {
         );
     }
 
+    const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+    if (userError || !userData) {
+        return redirect(
+            "/login?error=User not found. Please contact us to ensure that you are properly added to the system."
+        );
+    }
+
     return redirect("/dashboard");
 }

@@ -56,9 +56,9 @@ export default async function Login(props: {
                 </form>
                 <div className="flex justify-between items-center mt-6">
                     <span className="text-sm">Don't have an account?</span>
-                    <Link href="/register" className="font-medium">
-                        Register now
-                    </Link>
+                    <a href="mailto:vp.operations@usstm.ca;tech@usstm.ca" target="_blank" className="font-medium">
+                        Contact Us!
+                    </a>
                 </div>
                 <div className="mt-6 text-sm text-gray-600 text-center">
                     For login information, please contact{" "}
