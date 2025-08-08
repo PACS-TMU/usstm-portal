@@ -45,13 +45,13 @@ export default async function DashboardPage() {
             </p>
             <div id="dashboard" className="flex flex-col sm:flex-row gap-4">
                 <a
-                    href="/finance"
+                    href="/dashboard/finance"
                     className="flex-1 px-6 py-3 bg-highlight text-white rounded-lg text-center font-semibold hover:bg-highlight-dark ease-in-out duration-300 transition"
                 >
                     Finance Links
                 </a>
                 <a
-                    href="/events"
+                    href="/dashboard/events"
                     className="flex-1 px-6 py-3 bg-highlight text-white rounded-lg text-center font-semibold hover:bg-highlight-dark ease-in-out duration-300 transition"
                 >
                     Manage Your Events

@@ -23,6 +23,7 @@ export default async function DashboardLayout({
             <main>
                 {children}
             </main>
+            <div className="h-16" />
             <Footer />
         </div>
     );

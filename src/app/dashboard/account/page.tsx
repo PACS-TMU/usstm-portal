@@ -15,8 +15,6 @@ export default async function AccountPage() {
         .eq("id", user?.id)
         .single();
 
-    console.log(profile);
-
     if (error || !profile) {
         return (
             <div className="max-w-xl mx-auto mt-12 p-6 bg-white rounded-lg shadow text-center">

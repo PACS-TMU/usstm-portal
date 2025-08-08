@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function CopyEmailButton({ email }: { email: string }) {
     const [copied, setCopied] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        // Using matchMedia for better responsiveness
+        const mobileQuery = window.matchMedia("(max-width: 1024px)"); // md breakpoint, adjust if needed
+        setIsMobile(mobileQuery.matches);
+
+        const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+        mobileQuery.addEventListener("change", handler);
+
+        return () => mobileQuery.removeEventListener("change", handler);
+    }, []);
 
     async function handleCopy() {
         try {
@@ -15,12 +27,26 @@ export default function CopyEmailButton({ email }: { email: string }) {
         }
     }
 
+    if (isMobile) {
+        // Mobile: show mailto link instead of copy button
+        return (
+            <a
+                href={`mailto:${email}`}
+                className="text-highlight underline hover:text-highlight-dark transition break-all"
+            >
+                {email}
+            </a>
+        );
+    }
+
+    // Desktop: copy button
     return (
         <div className="inline-block">
             <button
                 type="button"
                 onClick={handleCopy}
                 className="text-highlight underline hover:text-highlight-dark transition"
+                aria-label={`Copy email address ${email}`}
             >
                 {email}
             </button>
