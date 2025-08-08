@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import MessageAcceptor from "@/components/general/messageAcceptor";
 
 const defaultUrl = process.env.NEXT_PUBLIC_BASE_URL
     ? `https://${process.env.NEXT_PUBLIC_BASE_URL}`
     : "http://localhost:3000";
-
-console.log("Base: ", defaultUrl);
 
 export const metadata: Metadata = {
     metadataBase: new URL(defaultUrl),
@@ -30,6 +29,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${geistSans.className} antialiased`}>
                 {children}
+                <MessageAcceptor />
             </body>
         </html>
     );
