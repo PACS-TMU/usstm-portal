@@ -26,12 +26,12 @@ h6 {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
-a:not(nav a) {
+a:not(nav a):not(#dashboard a):not(#finance a) {
     color: var(--color-highlight);
     text-decoration: underline;
 }
 
-a:hover:not(nav a) {
+a:hover:not(nav a):not(#dashboard a):not(#finance a) {
     transition: ease-in-out 0.2s;
     color: var(--color-highlight-dark);
 }
@@ -39,7 +39,8 @@ a:hover:not(nav a) {
 main {
     position: relative;
     max-width: 1440px;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
 }

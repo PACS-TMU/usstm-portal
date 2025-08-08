@@ -7,7 +7,8 @@ import { FaUser } from "react-icons/fa";
 
 const NAV_LEFT_ITEMS = [
     { label: "Events", href: "/dashboard/events" },
-    { label: "Finances", href: "/dashboard/finances" },
+    { label: "Finances", href: "/dashboard/finance" },
+    { label: "Contact", href: "/dashboard/contact" },
 ];
 
 export default function Navbar() {

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar/navbar";
+import Footer from "@/components/footer/footer";
 
 export default async function DashboardLayout({
     children,
@@ -13,7 +14,7 @@ export default async function DashboardLayout({
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/login?message=Please log in to access the dashboard.");
+        redirect("/login?error=Please log in to access the dashboard.");
     }
 
     return (
@@ -22,6 +23,7 @@ export default async function DashboardLayout({
             <main>
                 {children}
             </main>
+            <Footer />
         </div>
     );
 }
