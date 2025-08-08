@@ -26,12 +26,12 @@ h6 {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
-a:not(#navbar a) {
+a:not(nav a) {
     color: var(--color-highlight);
     text-decoration: underline;
 }
 
-a:hover:not(#navbar a) {
+a:hover:not(nav a) {
     transition: ease-in-out 0.2s;
     color: var(--color-highlight-dark);
 }
