@@ -1,16 +1,28 @@
 "use server";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+const REDIRECT_BASE = "/dashboard/events";
+
+// Auth
 export async function getCurrentUser() {
     const supabase = await createClient();
     const {
         data: { user },
         error,
     } = await supabase.auth.getUser();
-    if (error) throw new Error("Failed to fetch current user");
+
+    if (error || !user) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Please sign in to continue."
+            )}`
+        );
+    }
     return user;
 }
 
+// Username lookup
 export async function getUsernameById(uid: string) {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -19,42 +31,155 @@ export async function getUsernameById(uid: string) {
         .eq("id", uid)
         .single();
 
-    if (error) throw new Error("Failed to fetch username");
+    if (error) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Could not load username."
+            )}`
+        );
+    }
     return data?.username || "";
 }
 
+// --- helper: resolve usernames for a set of user IDs ---
+async function resolveUsernamesByIds(
+    supabase: ReturnType<typeof createClient> extends Promise<infer T>
+        ? T
+        : any,
+    ids: string[]
+): Promise<Record<string, string>> {
+    const unique = Array.from(new Set(ids)).filter(Boolean);
+    if (unique.length === 0) return {};
+
+    const { data: users, error: userErr } = await supabase
+        .from("users")
+        .select("id, username")
+        .in("id", unique);
+
+    if (userErr) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to resolve usernames."
+            )}`
+        );
+    }
+
+    const map: Record<string, string> = {};
+    for (const u of users ?? []) map[u.id] = u.username ?? "";
+    return map;
+}
+
+// Organizers for one event (id + name)
+export async function getOrganizersForEvent(
+    eventId: string
+): Promise<{ id: string; name: string }[]> {
+    const supabase = await createClient();
+
+    const { data: orgRows, error: orgErr } = await supabase
+        .from("organizers")
+        .select("group_id")
+        .eq("event_id", eventId);
+
+    if (orgErr) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to load event organizers."
+            )}`
+        );
+    }
+
+    const ids = Array.from(new Set((orgRows ?? []).map((r) => r.group_id)));
+    if (ids.length === 0) return [];
+
+    const nameMap = await resolveUsernamesByIds(supabase, ids);
+    return ids.map((id) => ({ id, name: nameMap[id] ?? "Unknown" }));
+}
+
+// Events for user (with creator/organizer names)
 export async function getEventsForUser(uid: string) {
     const supabase = await createClient();
-    const { data: orgRows, error: orgErr } = await supabase
+
+    // 1) Events where the user is an organizer
+    const { data: orgRowsForUser, error: orgErr } = await supabase
         .from("organizers")
         .select("event_id")
         .eq("group_id", uid);
 
-    if (orgErr) throw new Error("Failed to fetch organizer events");
+    if (orgErr) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to load organizer events."
+            )}`
+        );
+    }
 
-    const organizerEventIds = orgRows?.map((r) => r.event_id) ?? [];
+    const organizerEventIds = orgRowsForUser?.map((r) => r.event_id) ?? [];
+    const filters: string[] = [`created_by.eq.${uid}`];
+    if (organizerEventIds.length) {
+        const quoted = organizerEventIds.map((id) => `"${id}"`).join(",");
+        filters.push(`id.in.(${quoted})`);
+    }
 
     const { data: events, error: evErr } = await supabase
         .from("events")
         .select("*")
-        .or(
-            [
-                `created_by.eq.${uid}`,
-                organizerEventIds.length
-                    ? `id.in.(${organizerEventIds.join(",")})`
-                    : "id.eq.0",
-            ].join(",")
+        .or(filters.join(","));
+
+    if (evErr) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to load events."
+            )}`
         );
+    }
 
-    if (evErr) throw new Error("Failed to fetch events");
+    const safeEvents = events ?? [];
+    if (safeEvents.length === 0) return [];
 
-    return (events ?? []).map((e) => ({
+    // 2) All organizers for these events
+    const eventIds = safeEvents.map((e) => e.id);
+    const { data: allOrgRows, error: allOrgErr } = await supabase
+        .from("organizers")
+        .select("event_id, group_id")
+        .in("event_id", eventIds);
+
+    if (allOrgErr) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to load event organizers."
+            )}`
+        );
+    }
+
+    // 3) Resolve all usernames (creators + organizers)
+    const creatorIds = safeEvents.map((e) => e.created_by);
+    const organizerIds = Array.from(
+        new Set((allOrgRows ?? []).map((r) => r.group_id))
+    );
+    const allIds = Array.from(new Set([...creatorIds, ...organizerIds]));
+    const nameMap = await resolveUsernamesByIds(supabase, allIds);
+
+    // 4) Index organizers by event
+    const orgByEvent = new Map<string, string[]>();
+    for (const row of allOrgRows ?? []) {
+        if (!orgByEvent.has(row.event_id)) orgByEvent.set(row.event_id, []);
+        orgByEvent.get(row.event_id)!.push(row.group_id);
+    }
+
+    // 5) Final shape for UI
+    return safeEvents.map((e) => ({
         ...e,
+        created_by_name: nameMap[e.created_by] ?? "Unknown",
+        organizers: (orgByEvent.get(e.id) ?? []).map((id) => ({
+            id,
+            name: nameMap[id] ?? "Unknown",
+        })),
         canManage: e.created_by === uid,
     }));
 }
 
-export async function deleteEvent(eventId: number) {
+// Delete event (creator-only). Always redirects on success/error.
+export async function deleteEvent(eventId: string) {
     const supabase = await createClient();
     const user = await getCurrentUser();
 
@@ -64,9 +189,20 @@ export async function deleteEvent(eventId: number) {
         .eq("id", eventId)
         .single();
 
-    if (evErr) throw new Error("Failed to load event");
-    if (eventRow.created_by !== user?.id) {
-        throw new Error("Only the creator can delete this event");
+    if (evErr || !eventRow) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Could not load that event."
+            )}`
+        );
+    }
+
+    if (!user || eventRow.created_by !== user.id) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Only the creator can delete this event."
+            )}`
+        );
     }
 
     const { error } = await supabase.rpc(
@@ -75,8 +211,17 @@ export async function deleteEvent(eventId: number) {
             p_event_id: eventId,
         }
     );
+
     if (error) {
         console.error("Delete event error:", error);
-        throw new Error("Failed to delete event");
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to delete event."
+            )}`
+        );
     }
+
+    redirect(
+        `${REDIRECT_BASE}?message=${encodeURIComponent("Event deleted.")}`
+    );
 }

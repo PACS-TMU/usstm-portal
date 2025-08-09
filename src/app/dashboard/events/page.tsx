@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import EventCard from "@/components/dashboard/events/eventCard";
-import EventSearch from "@/components/dashboard/events/eventSearch"; // <- import here
+import EventSearch from "@/components/dashboard/events/eventSearch";
 import {
     getCurrentUser,
     getUsernameById,
@@ -12,18 +12,26 @@ import {
 } from "@/server/eventActions";
 
 type Event = {
-    id: number;
+    id: string;
     title: string;
     description: string;
     start_time: string;
     end_time: string;
     location: string;
     address: string;
+    created_by: string;
+};
+
+type User = {
+    id: string;
+    email: string;
 };
 
 export default function EventsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
 
+    const [user, setUser] = useState<User | null>(null);
     const [username, setUsername] = useState("");
     const [events, setEvents] = useState<Event[]>([]);
     const [search, setSearch] = useState("");
@@ -32,53 +40,53 @@ export default function EventsPage() {
     const [error, setError] = useState<string | null>(null);
 
     const [pastPage, setPastPage] = useState(1);
-    const PAST_EVENTS_PER_PAGE = 5;
+    const PAST_EVENTS_PER_PAGE = 10;
 
-    useEffect(() => {
-        async function fetchUserData() {
-            setLoading(true);
-            setError(null);
-
-            try {
-                const user = await getCurrentUser();
-                if (!user?.id) {
-                    setUsername("");
-                    setEvents([]);
-                    setLoading(false);
-                    return;
-                }
-
-                const name = await getUsernameById(user.id);
-                setUsername(name || "Unknown User");
-
-                const fetchedEvents = await getEventsForUser(user.id);
-                if (!Array.isArray(fetchedEvents)) {
-                    throw new Error("Invalid data format for events");
-                }
-                setEvents(fetchedEvents);
-            } catch (err: any) {
-                console.error(err);
-                setError(
-                    err.message || "Something went wrong while loading events."
-                );
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchUserData();
-    }, []);
-
-    const handleDelete = async (eventId: number) => {
-        if (!confirm("Are you sure you want to delete this event?")) return;
+    const fetchUserData = useCallback(async () => {
+        setLoading(true);
+        setError(null);
 
         try {
-            await deleteEvent(eventId);
-            setEvents((prev) => prev.filter((e) => e.id !== eventId));
+            const user = await getCurrentUser();
+            if (!user?.id) {
+                setUsername("");
+                setUser(null);
+                setEvents([]);
+                setLoading(false);
+                return;
+            }
+
+            setUser({
+                id: user.id,
+                email: user.email ?? "",
+            });
+
+            const name = await getUsernameById(user.id);
+            setUsername(name || "Unknown User");
+
+            const fetchedEvents = await getEventsForUser(user.id);
+            if (!Array.isArray(fetchedEvents)) {
+                throw new Error("Invalid data format for events");
+            }
+            setEvents(fetchedEvents);
         } catch (err: any) {
             console.error(err);
-            alert(err.message || "Failed to delete event");
+            setError(
+                err.message || "Something went wrong while loading events."
+            );
+        } finally {
+            setLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        // Run on first mount and whenever ?query=params change
+        fetchUserData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams.toString()]);
+
+    const handleDelete = async (eventId: string) => {
+        await deleteEvent(eventId); // server will redirect; nothing else to do
     };
 
     const now = new Date();
@@ -163,6 +171,7 @@ export default function EventsPage() {
                                 <EventCard
                                     key={event.id}
                                     event={event}
+                                    currentUserId={user?.id || ""}
                                     onDelete={handleDelete}
                                 />
                             ))}
@@ -200,6 +209,7 @@ export default function EventsPage() {
                                     <EventCard
                                         key={event.id}
                                         event={event}
+                                        currentUserId={user?.id || ""}
                                         onDelete={handleDelete}
                                     />
                                 ))}
