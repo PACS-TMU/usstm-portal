@@ -26,12 +26,12 @@ h6 {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
-a:not(nav a):not(#dashboard a):not(#finance a) {
+a:not(nav a):not(#dashboard a):not(#finance a):not(#upcoming-events a) {
     color: var(--color-highlight);
     text-decoration: underline;
 }
 
-a:hover:not(nav a):not(#dashboard a):not(#finance a) {
+a:hover:not(nav a):not(#dashboard a):not(#finance a):not(#upcoming-events a) {
     transition: ease-in-out 0.2s;
     color: var(--color-highlight-dark);
 }
