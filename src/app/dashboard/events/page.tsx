@@ -40,7 +40,7 @@ export default function EventsPage() {
     const [error, setError] = useState<string | null>(null);
 
     const [pastPage, setPastPage] = useState(1);
-    const PAST_EVENTS_PER_PAGE = 10;
+    const PAST_EVENTS_PER_PAGE = 4;
 
     const fetchUserData = useCallback(async () => {
         setLoading(true);
@@ -80,13 +80,11 @@ export default function EventsPage() {
     }, []);
 
     useEffect(() => {
-        // Run on first mount and whenever ?query=params change
         fetchUserData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams.toString()]);
 
     const handleDelete = async (eventId: string) => {
-        await deleteEvent(eventId); // server will redirect; nothing else to do
+        await deleteEvent(eventId);
     };
 
     const now = new Date();
@@ -99,6 +97,10 @@ export default function EventsPage() {
                 .join(" ")
                 .toLowerCase()
                 .includes(search.trim().toLowerCase())
+        )
+        .sort(
+            (a, b) =>
+                new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
         );
 
     // Filter past events by past search term
@@ -135,7 +137,7 @@ export default function EventsPage() {
                     </p>
                 </div>
                 <button
-                    onClick={() => router.push("/dashboard/events/new")}
+                    onClick={() => router.push("/dashboard/events/add")}
                     className="mt-4 md:mt-0 bg-highlight hover:bg-highlight-dark hover:cursor-pointer ease-in-out transition-colors duration-200 text-background font-semibold px-4 py-2 rounded shadow"
                 >
                     Add New Event
@@ -220,10 +222,10 @@ export default function EventsPage() {
                                 <div className="flex justify-center items-center gap-4 mt-6">
                                     <button
                                         disabled={pastPage === 1}
-                                        onClick={() =>
-                                            setPastPage((p) => p - 1)
-                                        }
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50"
+                                        onClick={() => setPastPage((p) => p - 1)}
+                                        className={`px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
+                                            pastPage !== 1 ? "hover:bg-gray-300 hover:cursor-pointer" : ""
+                                        }`}
                                     >
                                         Prev
                                     </button>
@@ -235,7 +237,9 @@ export default function EventsPage() {
                                         onClick={() =>
                                             setPastPage((p) => p + 1)
                                         }
-                                        className="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50"
+                                        className={`px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
+                                            pastPage !== totalPastPages ? "hover:bg-gray-300 hover:cursor-pointer" : ""
+                                        }`}
                                     >
                                         Next
                                     </button>

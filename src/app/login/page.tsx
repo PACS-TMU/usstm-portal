@@ -1,11 +1,20 @@
-import Link from "next/link";
 import { SubmitButton } from "@/components/form/submitButton";
 import signIn from "@/server/signIn";
 import CopyEmailButton from "@/components/general/copyEmail";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function Login(props: {
     searchParams: Promise<{ message: string }>;
 }) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+        // User is logged in, redirect to dashboard
+        redirect("/dashboard");
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-theme-background">
             <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
@@ -61,7 +70,8 @@ export default async function Login(props: {
                     </a>
                 </div>
                 <div className="mt-6 text-sm text-gray-600 text-center">
-                    For login information, please contact{" "}
+                    For login information, please contact us at
+                    <br />
                     <CopyEmailButton email="vp.operations@usstm.ca" />
                 </div>
             </div>

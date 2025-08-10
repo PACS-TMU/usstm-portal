@@ -45,6 +45,7 @@ export default function EventSearch({
             <div className="flex flex-col md:flex-row gap-2">
                 <input
                     type="text"
+                    name="search"
                     value={input}
                     placeholder={placeholder}
                     className="flex-grow px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-highlight-blue dark:bg-gray-800 dark:text-white"
