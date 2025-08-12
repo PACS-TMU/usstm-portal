@@ -225,3 +225,7 @@ export async function deleteEvent(eventId: string) {
         `${REDIRECT_BASE}?message=${encodeURIComponent("Event deleted.")}`
     );
 }
+
+export async function addEvent(formData: FormData) {
+    return;
+}
