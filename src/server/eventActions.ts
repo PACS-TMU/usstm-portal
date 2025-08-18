@@ -222,7 +222,9 @@ export async function deleteEvent(eventId: string) {
     }
 
     redirect(
-        `${REDIRECT_BASE}?message=${encodeURIComponent("Event deleted successfully!")}`
+        `${REDIRECT_BASE}?message=${encodeURIComponent(
+            "Event deleted successfully!"
+        )}`
     );
 }
 
@@ -246,19 +248,16 @@ export async function addEvent(formData: FormData) {
     const supabase = await createClient();
     const user = await getCurrentUser();
 
-    const { data, error } = await supabase.rpc(
-        "create_event_with_organizers",
-        {
-            p_title: title,
-            p_description: description,
-            p_location: location,
-            p_address: address,
-            p_start_time: start_time,
-            p_end_time: end_time,
-            p_created_by: user.id,
-            p_group_ids: groupIds,
-        }
-    );
+    const { data, error } = await supabase.rpc("create_event_with_organizers", {
+        p_title: title,
+        p_description: description,
+        p_location: location,
+        p_address: address,
+        p_start_time: start_time,
+        p_end_time: end_time,
+        p_created_by: user.id,
+        p_group_ids: groupIds,
+    });
 
     if (error || !data) {
         console.error("Create event error:", error);
@@ -269,5 +268,116 @@ export async function addEvent(formData: FormData) {
         );
     }
 
-    redirect(`${REDIRECT_BASE}?message=${encodeURIComponent("Event created successfully! You can now manage it.")}`);
+    redirect(
+        `${REDIRECT_BASE}?message=${encodeURIComponent(
+            "Event created successfully! You can now manage it."
+        )}`
+    );
+}
+
+// Fetch one event (with minimal fields)
+export async function getEventById(eventId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", eventId)
+        .single();
+
+    if (error) {
+        redirect(
+            `/dashboard/events?error=${encodeURIComponent(
+                "Failed to load event."
+            )}`
+        );
+    }
+    return data;
+}
+
+export async function updateEvent(formData: FormData) {
+    const supabase = await createClient();
+    const user = await getCurrentUser();
+
+    const eventId = String(formData.get("eventId") || "");
+    if (!eventId) {
+        redirect(
+            `/dashboard/events?error=${encodeURIComponent("Missing event id.")}`
+        );
+    }
+
+    // Which fields were actually changed?
+    const dirty = String(formData.get("dirty") || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+    // Collect values only if marked dirty; otherwise pass null so RPC ignores
+    const title = dirty.includes("title")
+        ? (formData.get("title") as string)
+        : null;
+    const description = dirty.includes("description")
+        ? (formData.get("description") as string)
+        : null;
+    const location = dirty.includes("location")
+        ? (formData.get("location") as string)
+        : null;
+    const address = dirty.includes("address")
+        ? (formData.get("address") as string)
+        : null;
+    const start_time = dirty.includes("start")
+        ? (formData.get("start") as string)
+        : null;
+    const end_time = dirty.includes("end")
+        ? (formData.get("end") as string)
+        : null;
+    const groupIds = dirty.includes("organizingGroups")
+        ? (formData.getAll("organizingGroups") as string[])
+        : null;
+
+    // Authorization: ensure current user owns the event
+    const { data: evRow, error: evErr } = await supabase
+        .from("events")
+        .select("id, created_by")
+        .eq("id", eventId)
+        .single();
+
+    if (evErr || !evRow) {
+        redirect(
+            `/dashboard/events?error=${encodeURIComponent(
+                "Could not load that event."
+            )}`
+        );
+    }
+    if (evRow.created_by !== user.id) {
+        redirect(
+            `/dashboard/events?error=${encodeURIComponent(
+                "Only the creator can update this event."
+            )}`
+        );
+    }
+
+    const { error } = await supabase.rpc("update_event_with_organizers", {
+        p_event_id: eventId,
+        p_title: title,
+        p_description: description,
+        p_location: location,
+        p_address: address,
+        p_start_time: start_time,
+        p_end_time: end_time,
+        p_group_ids: groupIds,
+    });
+
+    if (error) {
+        console.error("Update event error:", error);
+        redirect(
+            `/dashboard/events?error=${encodeURIComponent(
+                "Failed to update event."
+            )}`
+        );
+    }
+
+    redirect(
+        `/dashboard/events?message=${encodeURIComponent("Event updated.")}`
+    );
 }

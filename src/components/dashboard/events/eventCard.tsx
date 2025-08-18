@@ -79,7 +79,7 @@ export default function EventCard({
                 {canManage ? (
                     <>
                         <Link
-                            href={`/dashboard/events/${event.id}/manage`}
+                            href={`/dashboard/events/manage/${event.id}`}
                             className="bg-highlight hover:bg-highlight-dark ease-in-out transition-colors duration-200 text-background px-3 py-1 rounded text-sm"
                         >
                             Manage
