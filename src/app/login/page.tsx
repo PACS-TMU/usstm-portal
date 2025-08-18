@@ -17,9 +17,10 @@ export default async function Login(props: {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-theme-background">
+            <h1 className="sr-only">USSTM Portal Login</h1>
             <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-theme-primary mb-6 text-center">
-                    Sign in to your account
+                    Log into the USSTM Portal
                 </h2>
                 <form className="space-y-5" method="post">
                     <div>

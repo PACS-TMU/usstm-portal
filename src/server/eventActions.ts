@@ -222,10 +222,52 @@ export async function deleteEvent(eventId: string) {
     }
 
     redirect(
-        `${REDIRECT_BASE}?message=${encodeURIComponent("Event deleted.")}`
+        `${REDIRECT_BASE}?message=${encodeURIComponent("Event deleted successfully!")}`
     );
 }
 
 export async function addEvent(formData: FormData) {
-    return;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const location = formData.get("location") as string;
+    const address = formData.get("address") as string;
+    const start_time = formData.get("start") as string;
+    const end_time = formData.get("end") as string;
+
+    const groupIds = formData.getAll("organizingGroups") as string[];
+    if (groupIds.length === 0) {
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "You must select at least one organizing group."
+            )}`
+        );
+    }
+
+    const supabase = await createClient();
+    const user = await getCurrentUser();
+
+    const { data, error } = await supabase.rpc(
+        "create_event_with_organizers",
+        {
+            p_title: title,
+            p_description: description,
+            p_location: location,
+            p_address: address,
+            p_start_time: start_time,
+            p_end_time: end_time,
+            p_created_by: user.id,
+            p_group_ids: groupIds,
+        }
+    );
+
+    if (error || !data) {
+        console.error("Create event error:", error);
+        redirect(
+            `${REDIRECT_BASE}?error=${encodeURIComponent(
+                "Failed to create event. If the issue persists, please contact us."
+            )}`
+        );
+    }
+
+    redirect(`${REDIRECT_BASE}?message=${encodeURIComponent("Event created successfully! You can now manage it.")}`);
 }

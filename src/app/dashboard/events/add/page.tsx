@@ -1,15 +1,49 @@
 "use client";
 import { SubmitButton } from "@/components/form/submitButton";
 import { addEvent } from "@/server/eventActions";
+import GroupsSelect from "@/components/dashboard/events/selectGroups";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { redirect } from "next/navigation";
 
-// Example groups, replace with your actual data source
-const organizingGroups = [
-    { id: "1", name: "Group Alpha" },
-    { id: "2", name: "Group Beta" },
-    { id: "3", name: "Group Gamma" },
-];
+
+const nowLocal = () =>
+    new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
 
 export default function AddEventPage() {
+    const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+    const [startValue, setStartValue] = useState<string>(""); // YYYY-MM-DDTHH:mm
+    const [endValue, setEndValue] = useState<string>("");
+    const [organizingGroups, setOrganizingGroups] = useState<{ id: string; username: string }[]>([]);
+
+    const minNow = nowLocal();
+    const endMin = startValue || minNow;
+
+    const supabase = createClient();
+    
+    useEffect(() => {
+        async function fetchUsers() {
+            const { data, error } = await supabase
+                .from("users")
+                .select("id, username");
+
+            if (error) {
+                console.error("Error fetching users:", error);
+                return redirect("/dashboard/events?error=failed to retrieve users");
+            } else {
+                setOrganizingGroups(
+                    (data ?? []).map((user: { id: string; username: string }) => ({
+                        id: user.id,
+                        username: user.username,
+                    }))
+                );
+            }
+        }
+        fetchUsers();
+    }, []);
+
     return (
         <main className="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-md mt-8">
             <h1 className="text-2xl font-bold mb-6">Add New Event</h1>
@@ -55,6 +89,23 @@ export default function AddEventPage() {
                         rows={4}
                         className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-highlight-blue focus:ring-2 focus:ring-highlight-blue transition"
                     />
+                </div>
+
+                <div>
+                    <GroupsSelect
+                        organizingGroups={organizingGroups}
+                        selectedGroups={selectedGroups}
+                        onChange={setSelectedGroups}
+                    />
+                    {/* Hidden inputs so selected IDs are submitted with FormData */}
+                    {selectedGroups.map((id) => (
+                        <input
+                            key={id}
+                            type="hidden"
+                            name="organizingGroups"
+                            value={id}
+                        />
+                    ))}
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -113,7 +164,17 @@ export default function AddEventPage() {
                             type="datetime-local"
                             id="start"
                             name="start"
+                            min={minNow}
                             required
+                            value={startValue}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setStartValue(v);
+                                // If current end is before new start, bump end up to start
+                                if (endValue && endValue < v) {
+                                    setEndValue(v);
+                                }
+                            }}
                             className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-highlight-blue focus:ring-2 focus:ring-highlight-blue transition"
                         />
                     </div>
@@ -129,48 +190,45 @@ export default function AddEventPage() {
                             type="datetime-local"
                             id="end"
                             name="end"
+                            min={
+                                startValue
+                                    ? (() => {
+                                        // Parse startValue as local time and add 1 hour
+                                        const [date, time] = startValue.split("T");
+                                        const [hour, minute] = time.split(":").map(Number);
+                                        const newHour = String(hour + 1).padStart(2, "0");
+                                        return `${date}T${newHour}:${minute}`;
+                                    })()
+                                    : minNow
+                            }
                             required
+                            value={endValue}
+                            onChange={(e) => setEndValue(e.target.value)}
                             className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-highlight-blue focus:ring-2 focus:ring-highlight-blue transition"
                         />
+                        {startValue && (
+                            <p className="mt-1 text-xs text-gray-500">
+                                End time cannot be before{" "}
+                                {new Date(new Date(startValue).getTime() + 3600 * 1000).toLocaleString()}.
+                            </p>
+                        )}
                     </div>
                 </div>
 
-                <div>
-                    <label
-                        htmlFor="organizingGroups"
-                        className="block text-sm font-semibold text-gray-700 mb-1"
-                    >
-                        Organizing Group(s)
-                        <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                        <select
-                            id="organizingGroups"
-                            name="organizingGroups"
-                            multiple
-                            required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-highlight-blue focus:ring-2 focus:ring-highlight-blue transition"
-                            size={organizingGroups.length > 3 ? 4 : organizingGroups.length}
-                        >
-                            {organizingGroups.map((group) => (
-                                <option key={group.id} value={group.id} className="px-2">
-                                    {group.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <p className="text-xs lg:text-sm text-gray-500 mt-1 mx-2">
-                        Hold Ctrl (Windows) or Command (Mac) to select multiple groups. On mobile, tap to select/deselect.
-                    </p>
-                </div>
-
-                <div className="pt-2 flex w-full">
+                <div className="pt-2 flex flex-col items-center justify-centerw-full">
                     <SubmitButton
                         pendingText="Adding..."
-                        className="w-full md:w-auto mx-auto px-6 py-2 rounded-lg bg-highlight text-white font-semibold shadow hover:bg-highlight-dark focus:bg-highlight-blue transition"
+                        disabled={selectedGroups.length === 0}
+                        className="w-full md:w-auto mx-auto px-6 py-2 rounded-lg bg-highlight text-white font-semibold shadow hover:bg-highlight-dark focus:bg-highlight-blue transition disabled:cursor-not-allowed disabled:bg-gray-400 disabled:opacity-75"
                     >
                         Add Event
                     </SubmitButton>
+                    {selectedGroups.length === 0 && (
+                        <p className="text-xs lg:text-sm text-gray-500 mt-1 mx-2">
+                            You must pick at least one organizing group to add
+                            an event.
+                        </p>
+                    )}
                 </div>
             </form>
         </main>
