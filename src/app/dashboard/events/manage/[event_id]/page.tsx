@@ -6,19 +6,18 @@ import {
 } from "@/server/eventActions";
 
 import getAllGroups from "@/server/getAllGroups";
-
 import EventForm from "@/components/dashboard/events/eventForm";
 import { updateEvent } from "@/server/eventActions";
 
 interface ManageEventsPageProps {
-    params: {
+    params: Promise<{
         event_id: string;
-    };
+    }>;
 }
 
-export default async function ManageEventsPage({
-    params: { event_id },
-}: ManageEventsPageProps) {
+export default async function ManageEventsPage(props: ManageEventsPageProps) {
+    const { event_id } = await props.params;
+
     const user = await getCurrentUser();
     const event = await getEventById(event_id);
     if (!event) {
