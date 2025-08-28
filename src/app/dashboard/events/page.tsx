@@ -69,19 +69,23 @@ export default function EventsPage() {
                 throw new Error("Invalid data format for events");
             }
             setEvents(fetchedEvents);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
             setError(
-                err.message || "Something went wrong while loading events."
+                err instanceof Error
+                    ? err.message
+                    : "Something went wrong while loading events."
             );
         } finally {
             setLoading(false);
         }
     }, []);
 
+    const searchParamsString = searchParams.toString();
+
     useEffect(() => {
         fetchUserData();
-    }, [searchParams.toString()]);
+    }, [searchParamsString, fetchUserData]);
 
     const handleDelete = async (eventId: string) => {
         await deleteEvent(eventId);

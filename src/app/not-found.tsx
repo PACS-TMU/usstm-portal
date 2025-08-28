@@ -1,15 +1,24 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiAlertTriangle } from 'react-icons/fi';
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client';
+import { User } from '@supabase/supabase-js';
 
-export default async function NotFoundPage() {
+export default function NotFoundPage() {
     const router = useRouter();
 
-    const supabase = createClient();
-    const { data: { user } } =  await supabase.auth.getUser();
-    const isLoggedIn = !!user;
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setUser(user);
+            setIsLoggedIn(!!user);
+        });
+    }, []);
 
     const handleDashboardClick = (e: React.MouseEvent) => {
         if (!user) {

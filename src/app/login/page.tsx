@@ -4,9 +4,7 @@ import CopyEmailButton from "@/components/general/copyEmail";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export default async function Login(props: {
-    searchParams: Promise<{ message: string }>;
-}) {
+export default async function Login() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -65,7 +63,7 @@ export default async function Login(props: {
                     </SubmitButton>
                 </form>
                 <div className="flex justify-between items-center mt-6">
-                    <span className="text-sm">Don't have an account?</span>
+                    <span className="text-sm">Don&apos;t have an account?</span>
                     <a href="mailto:vp.operations@usstm.ca;tech@usstm.ca" target="_blank" className="font-medium">
                         Contact Us!
                     </a>

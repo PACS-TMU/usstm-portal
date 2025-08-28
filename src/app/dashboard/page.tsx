@@ -41,7 +41,7 @@ export default async function DashboardPage() {
                 seamlessly add and manage your events, as well as find important
                 finance-related links and tools. Use the options below to get
                 started and make the most of your student group experience. If
-                you need any assistance, don't hesitate to <Link href="/dashboard/contact">contact us</Link>!
+                you need any assistance, don&apos;t hesitate to <Link href="/dashboard/contact">contact us</Link>!
             </p>
             <div id="dashboard" className="flex flex-col sm:flex-row gap-4">
                 <a

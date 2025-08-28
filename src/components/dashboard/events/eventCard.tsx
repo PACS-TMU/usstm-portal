@@ -29,12 +29,31 @@ function formatEventDate(start: string, end: string) {
     }
 }
 
+type Organizer = {
+    name: string;
+    // add other organizer fields if needed
+};
+
+type Event = {
+    id: string;
+    title: string;
+    description: string;
+    location: string;
+    address: string;
+    organizers?: Organizer[];
+    created_by: string;
+    created_by_name?: string;
+    start_time: string;
+    end_time: string;
+    // add other event fields if needed
+};
+
 export default function EventCard({
     event,
     onDelete,
     currentUserId,
 }: {
-    event: any;
+    event: Event;
     onDelete: (id: string) => void;
     currentUserId: string;
 }) {
@@ -68,7 +87,7 @@ export default function EventCard({
             <div className="text-sm text-gray-500 dark:text-gray-400">
                 <span className="font-semibold">Organizers:</span>{" "}
                 {event.organizers && event.organizers.length > 0
-                    ? event.organizers.map((org: any) => org.name).join(", ")
+                    ? event.organizers.map((org) => org.name).join(", ")
                     : "None"}
             </div>{" "}
             <div className="text-sm text-gray-500 dark:text-gray-400">

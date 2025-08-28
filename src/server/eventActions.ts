@@ -43,9 +43,7 @@ export async function getUsernameById(uid: string) {
 
 // --- helper: resolve usernames for a set of user IDs ---
 async function resolveUsernamesByIds(
-    supabase: ReturnType<typeof createClient> extends Promise<infer T>
-        ? T
-        : any,
+    supabase: Awaited<ReturnType<typeof createClient>>,
     ids: string[]
 ): Promise<Record<string, string>> {
     const unique = Array.from(new Set(ids)).filter(Boolean);
