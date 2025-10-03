@@ -62,35 +62,35 @@ export default function EventCard({
         new Date(event.start_time) > new Date();
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 flex flex-col gap-2 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2 border border-gray-200">
             <div>
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                <h2 className="text-xl font-semibold text-gray-800">
                     {event.title}
                 </h2>
                 <div className="flex flex-row mt-1 mb-2">
-                    <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+                    <p className="text-gray-600 whitespace-pre-line leading-relaxed">
                         {formatEventDate(event.start_time, event.end_time)}
                     </p>
                 </div>
             </div>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-gray-600">
                 {event.description}
             </p>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500">
                 <span className="font-semibold">TMU Location:</span>{" "}
                 {event.location}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500">
                 <span className="font-semibold">Full Address:</span>{" "}
                 {event.address}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500">
                 <span className="font-semibold">Organizers:</span>{" "}
                 {event.organizers && event.organizers.length > 0
                     ? event.organizers.map((org) => org.name).join(", ")
                     : "None"}
             </div>{" "}
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500">
                 <span className="font-semibold">Created By:</span>{" "}
                 {event.created_by_name || "Unknown"}
             </div>
@@ -110,7 +110,7 @@ export default function EventCard({
                         />
                     </>
                 ) : (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+                    <div className="text-xs text-gray-500 italic">
                         {event.created_by === currentUserId
                             ? "Past events cannot be deleted or managed."
                             : "Only the student group that created this event can manage or delete it."}

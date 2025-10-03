@@ -48,7 +48,7 @@ export default function EventSearch({
                     name="search"
                     value={input}
                     placeholder={placeholder}
-                    className="flex-grow px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-highlight-blue dark:bg-gray-800 dark:text-white"
+                    className="flex-grow px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-highlight-blue"
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     aria-label={placeholder}

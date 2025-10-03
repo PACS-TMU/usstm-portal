@@ -227,13 +227,13 @@ export default function EventsPage() {
                                     <button
                                         disabled={pastPage === 1}
                                         onClick={() => setPastPage((p) => p - 1)}
-                                        className={`px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
+                                        className={`px-3 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
                                             pastPage !== 1 ? "hover:bg-gray-300 hover:cursor-pointer" : ""
                                         }`}
                                     >
                                         Prev
                                     </button>
-                                    <span className="text-gray-700 dark:text-gray-300">
+                                    <span className="text-gray-700">
                                         Page {pastPage} of {totalPastPages}
                                     </span>
                                     <button
@@ -241,7 +241,7 @@ export default function EventsPage() {
                                         onClick={() =>
                                             setPastPage((p) => p + 1)
                                         }
-                                        className={`px-3 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
+                                        className={`px-3 py-1 rounded border border-gray-300 disabled:opacity-50 disabled:hover:cursor-not-allowed transition ease-in-out duration-200 ${
                                             pastPage !== totalPastPages ? "hover:bg-gray-300 hover:cursor-pointer" : ""
                                         }`}
                                     >
@@ -251,7 +251,7 @@ export default function EventsPage() {
                             )}
                         </>
                     ) : (
-                        <div className="text-center text-gray-500 dark:text-gray-400">
+                        <div className="text-center text-gray-500">
                             No past events found.
                         </div>
                     )}
