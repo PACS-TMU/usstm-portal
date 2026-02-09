@@ -3,6 +3,7 @@ import signIn from "@/server/signIn";
 import CopyEmailButton from "@/components/general/copyEmail";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function Login() {
     const supabase = await createClient();
@@ -62,6 +63,9 @@ export default async function Login() {
                         Sign In
                     </SubmitButton>
                 </form>
+                <div className="block mt-6 text-center">
+                    <Link href="/reset/auth">I Forgot My Password</Link>
+                </div>
                 <div className="flex justify-between items-center mt-6">
                     <span className="text-sm">Don&apos;t have an account?</span>
                     <a href="mailto:vp.operations@usstm.ca;tech@usstm.ca" target="_blank" className="font-medium">
